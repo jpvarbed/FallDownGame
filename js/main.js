@@ -8,7 +8,6 @@ var PLAYER_HEIGHT = 32;
 var player = {
 	x: null,
 	y: null,
-	mainCanvas: null,
 	canvas: null,
 	update: function() {
 		if (keydown.left) {
@@ -30,7 +29,7 @@ var player = {
 	draw: function() {
 		// TODO: figure out how to draw relative to mainCanvas
 		var context = playerCanvas.getContext("2d");
-		var rad = playerCanvas.width / 2;
+		var rad = PLAYER_HEIGHT / 2;
 		context.beginPath();
 		context.arc(this.x, this.y, rad, 0, 2 * Math.PI, false);
 		context.fillStyle = 'black';
@@ -61,17 +60,8 @@ function InitializeCanvas() {
 	
 	// player
 	playerCanvas = $('#playerCanvas')[0];
-	playerCanvas.width = PLAYER_WIDTH;
-	playerCanvas.height = PLAYER_HEIGHT;
-
-	context = playerCanvas.getContext("2d");
-	var centerX = playerCanvas.width / 2;
-	var centerY = playerCanvas.height /2;
-	var rad = playerCanvas.width / 2;
-	context.beginPath();
-	context.arc(centerX, centerY, rad, 0, 2 * Math.PI, false);
-	context.fillStyle = 'black';
-	context.fill();
+	playerCanvas.width = MAIN_WIDTH;
+	playerCanvas.height = MAIN_HEIGHT;
 }
 
 function InitializeGame() {
