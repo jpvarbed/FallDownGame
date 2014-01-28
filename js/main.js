@@ -29,6 +29,12 @@ var player = {
 	},
 	draw: function() {
 		// TODO: figure out how to draw relative to mainCanvas
+		var context = playerCanvas.getContext("2d");
+		var rad = playerCanvas.width / 2;
+		context.beginPath();
+		context.arc(this.x, this.y, rad, 0, 2 * Math.PI, false);
+		context.fillStyle = 'black';
+		context.fill();
 	}
 }
 
