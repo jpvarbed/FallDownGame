@@ -4,12 +4,65 @@ var MAIN_WIDTH = 640;
 var MAIN_HEIGHT = 480;
 var PLAYER_WIDTH = 32;
 var PLAYER_HEIGHT = 32;
+var PLAYER_WIDTH = 20;
+var PLAYER_HEIGHT = 20;
+var SIDEBAR_WIDTH = 20;
+var BLOCK_HEIGHT = 32;
+var BLOCK_WIDTH = 32;
+var mazeBlocks = [];
+
+function mazeBlock(x, y, h, w)
+{
+	this.x = x;
+	this.y = y;
+	this.h = h;
+	this.w = w;
+
+	this.update = update;
+
+	function update() {
+		this.y -= 3;
+	}
+
+	this.draw = draw;
+
+	function draw(x, y) {
+		var context = mainCanvas.getContext("2d");
+		context.rect(x, y, h, w);
+		context.fillStyle = 'blue';
+		context.fill();
+	}
+
+	this.resize = resize;
+
+	function resize(h, w) {
+		var context = mainCanvas.getContext("2d");
+		context.rect(x, y, h, w);
+		context.fillStyle = 'blue';
+		context.fill();
+	}
+}
+
+var Maze = {
+	draw: function() {
+		var leftBlock = new mazeBlock(0, 0, mainCanvas.height, SIDEBAR_WIDTH);
+		leftBlock.draw();
+		mazeBlocks.push(leftBlock);
+
+		var rightBlock = new mazeBlock();
+		rightBlock.draw(mainCanvas.width - SIDEBAR_WIDTH , 0, mainCanvas.height, SIDEBAR_WIDTH);
+		mazeBlocks.push(rightBlock);
+	}
+}
 
 var player = {
 	x: null,
 	y: null,
 	canvas: null,
 	update: function() {
+		
+		playerCanvas.width = playerCanvas.width;
+
 		if (keydown.left) {
 			this.x -= 3;
 		}
@@ -34,6 +87,10 @@ var player = {
 		context.arc(this.x, this.y, rad, 0, 2 * Math.PI, false);
 		context.fillStyle = 'black';
 		context.fill();
+	},
+
+	explode: function() {
+		this.active = false;
 	}
 }
 
@@ -54,7 +111,7 @@ function InitializeCanvas() {
 	mainCanvas.height = MAIN_HEIGHT;
 	
 	var context = mainCanvas.getContext("2d");
-	context.rect(20, 20, mainCanvas.width - 20, mainCanvas.height - 20);
+	context.rect(20, 20, mainCanvas.width - 40, mainCanvas.height - 40);
 	context.fillStyle = 'green';
 	context.fill();
 	
@@ -70,17 +127,41 @@ function InitializeGame() {
 	player.mainCanvas = mainCanvas;
 	player.canvas = playerCanvas;
 
+	Maze.draw();
+
 	setInterval(function() {
 		Update();
 		Draw();
 	}, 1000/FPS);
 }
 
+function collides(a, b) {
+	return a.x < b.x + b.width &&
+		a.x + a.width > b.x &&
+		a.y < b.y + b.height &&
+		a.y + a.height > b.y;
+}
+
+function handleCollisions() {
+	mazeBlocks.forEach(function(mazeBlock) {
+		if (collides(mazeBlock, player)) {
+			player.explode();
+		}
+	})
+}
+
 function Update() {
 	player.update();
+
+	mazeBlocks.forEach(function(mazeBlock) {
+		mazeBlock.update();
+	})
+
+	handleCollisions();
 }
 
 function Draw() {
+	var newBlock = new mazeBlock(100, 100, BLOCK_HEIGHT, BLOCK_WIDTH);
 	player.draw();
 }
 
