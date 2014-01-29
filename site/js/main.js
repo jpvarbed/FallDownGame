@@ -96,7 +96,7 @@ var player = {
 
 var mainCanvas;
 var playerCanvas;
-
+var gameStartTime;
 
 // initialize when the DOM is loaded
 $(document).ready(function() {
@@ -127,7 +127,11 @@ function InitializeGame() {
 	player.mainCanvas = mainCanvas;
 	player.canvas = playerCanvas;
 
+
 	Maze.draw();
+
+	gameStartTime = (new Date).getTime();
+
 
 	setInterval(function() {
 		Update();
@@ -161,7 +165,20 @@ function Update() {
 }
 
 function Draw() {
+
 	var newBlock = new mazeBlock(100, 100, BLOCK_HEIGHT, BLOCK_WIDTH);
+
+	// clear canvas
+	var context = playerCanvas.getContext("2d");
+	context.clearRect(0, 0, playerCanvas.width, playerCanvas.height);
+
 	player.draw();
+
+	// draw timer
+	// TODO: put on correct canvas
+	var timerSeconds = (((new Date).getTime() - gameStartTime) / 1000) | 0;
+	context.fillStyle = "black";
+	context.font = "32px Veranda";
+	context.fillText(timerSeconds, 60, 60);
 }
 
