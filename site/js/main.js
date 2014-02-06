@@ -27,15 +27,15 @@ function MazeBlock(x, y) {
 	this.height = BLOCK_HEIGHT;
 }
 
-MazeBlock.prototype.update = function() {
-	this.y += GRAVITY;
-}
-
-MazeBlock.prototype.draw = function() {
-	var context = canvas.getContext("2d");
-	context.fillStyle = 'blue';
-	context.rect(this.x, this.y, this.width, this.height);
-	context.fill();
+MazeBlock.prototype = {
+	update: function() {
+		this.y += GRAVITY;
+	},
+	draw: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle = 'blue';
+		context.fillRect(this.x, this.y, this.width, this.height);
+	}
 }
 
 var maze = {
@@ -80,6 +80,8 @@ var player = {
 		var context = canvas.getContext("2d");
 		context.beginPath();
 		context.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false);
+		context.closePath();
+
 		context.fillStyle = 'black';
 		context.fill();
 	}
@@ -107,10 +109,10 @@ function InitializeCanvas() {
 	var staticCanvas = $('#staticCanvas')[0];
 	staticCanvas.width = MAIN_WIDTH;
 	staticCanvas.height = MAIN_HEIGHT;
+
 	var context = staticCanvas.getContext("2d");
-	context.rect(20, 20, staticCanvas.width - 40, staticCanvas.height - 40);
 	context.fillStyle = 'green';
-	context.fill();
+	context.fillRect(20, 20, staticCanvas.width - 40, staticCanvas.height - 40);
 }
 
 function InitializeGame() {
