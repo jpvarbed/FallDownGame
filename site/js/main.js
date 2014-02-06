@@ -13,6 +13,9 @@ var GRAVITY = 2;
 
 var canvas;
 
+var edgeBlocks = [];
+var mazeBlocks = [];
+
 // initialize when the DOM is loaded
 $(document).ready(function() {
 	InitializeCanvas();
@@ -20,11 +23,11 @@ $(document).ready(function() {
 });
 
 
-function MazeBlock(x, y) {
+function MazeBlock(x, y, h, w) {
 	this.x = x;
 	this.y = y;
-	this.width = BLOCK_WIDTH;
-	this.height = BLOCK_HEIGHT;
+	this.height = h;
+	this.width = w;	
 }
 
 MazeBlock.prototype.update = function() {
@@ -38,18 +41,37 @@ MazeBlock.prototype.draw = function() {
 	context.fill();
 }
 
+MazeBlock.prototype.explode = function() {
+	this.active = false;
+}
+
 var maze = {
-	leftBlock: new MazeBlock(0, 0),
-	rightBlock: new MazeBlock(MAIN_WIDTH - BLOCK_WIDTH, 0),
+
+	initalize: function()
+	{
+		var leftBlock = new MazeBlock(0, 0, MAIN_HEIGHT, BLOCK_WIDTH);
+		var rightBlock = new MazeBlock(MAIN_WIDTH - BLOCK_WIDTH, 0, MAIN_HEIGHT, MAIN_WIDTH);
+		edgeBlocks.push(leftBlock);
+		edgeBlocks.push(rightBlock);
+
+	},
 
 	update: function() {
-		this.leftBlock.update();
-		this.rightBlock.update();
+		mazeBlocks.forEach(function(mazeBlock) {
+			mazeBlock.update();
+		})
+		edgeBlocks.forEach(function(edgeBlock) {
+			edgeBlock.draw();
+		})
 	},
 
 	draw: function() {
-		this.leftBlock.draw();
-		this.rightBlock.draw();
+		mazeBlocks.forEach(function(mazeBlock) {
+			mazeBlock.draw();
+		})
+		edgeBlocks.forEach(function(edgeBlock) {
+			edgeBlock.draw();
+		})
 	}
 }
 
@@ -82,6 +104,10 @@ var player = {
 		context.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false);
 		context.fillStyle = 'black';
 		context.fill();
+	},
+
+	explode: function() {
+		this.active = false;
 	}
 }
 
@@ -114,15 +140,39 @@ function InitializeCanvas() {
 }
 
 function InitializeGame() {
+	maze.initalize();
 	setInterval(function() {
 		Update();
 		Draw();
 	}, 1000/FPS);
 }
 
+function Collides(a, b) {
+	return a.x < b.x + b.rad*2 &&
+		a.x + a.width > b.x &&
+		a.y < b.y + b.rad*2 &&
+		a.y + a.height > b.y;
+}
+
+function HandleCollisions() {
+	mazeBlocks.forEach(function(mazeBlock) {
+		if (collides(mazeBlock, player)) {
+			player.explode();
+		}
+	})
+
+	edgeBlocks.forEach(function(block) {
+		if (Collides(block, player)) {
+			player.explode();
+		}
+	})
+}
+
 function Update() {
 	player.update();
 	maze.update();
+
+	//HandleCollisions();
 }
 
 function Draw() {
