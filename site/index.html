@@ -30,17 +30,20 @@
         <script src="js/key_status.js"></script>
         <script src="js/main.js"></script>
 
+        <!--
         <script>
             var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
             (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
             g.src='//www.google-analytics.com/ga.js';
             s.parentNode.insertBefore(g,s)}(document,'script'));
         </script>
+        -->
 
         <div style="position: relative;">
-            <canvas id="mainCanvas"
+            <canvas id="staticCanvas"
                 style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-            <canvas id="playerCanvas"
+            <canvas id="dynamicCanvas"
                 style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+        </div>
     </body>
 </html>

@@ -2,70 +2,63 @@
 var FPS = 30;
 var MAIN_WIDTH = 640;
 var MAIN_HEIGHT = 480;
+
 var PLAYER_WIDTH = 32;
 var PLAYER_HEIGHT = 32;
-var PLAYER_WIDTH = 20;
-var PLAYER_HEIGHT = 20;
-var SIDEBAR_WIDTH = 20;
-var BLOCK_HEIGHT = 32;
+
 var BLOCK_WIDTH = 32;
-var GRAVITY = 1;
+var BLOCK_HEIGHT = 32;
 
-var edgeBlocks = [];
-var mazeBlocks = [];
+var GRAVITY = 2;
 
-function mazeBlock(x, y, h, w)
-{
+var canvas;
+
+// initialize when the DOM is loaded
+$(document).ready(function() {
+	InitializeCanvas();
+	InitializeGame();
+});
+
+
+function MazeBlock(x, y) {
 	this.x = x;
 	this.y = y;
-	this.h = h;
-	this.w = w;
-
-	this.update = update;
-
-	function update() {
-		this.y -= GRAVITY;
-	}
-
-	this.draw = draw;
-
-	function draw(x, y) {
-		var context = mainCanvas.getContext("2d");
-		context.rect(x, y, h, w);
-		context.fillStyle = 'blue';
-		context.fill();
-	}
-
-	this.resize = resize;
-
-	function resize(h, w) {
-		var context = mainCanvas.getContext("2d");
-		context.rect(x, y, h, w);
-		context.fillStyle = 'blue';
-		context.fill();
-	}
+	this.width = BLOCK_WIDTH;
+	this.height = BLOCK_HEIGHT;
 }
 
-var Maze = {
-	draw: function() {
-		var leftBlock = new mazeBlock(0, 0, SIDEBAR_WIDTH, mainCanvas.height);
-		leftBlock.draw(0, 0);
-		edgeBlocks.push(leftBlock);
+MazeBlock.prototype.update = function() {
+	this.y += GRAVITY;
+}
 
-		var rightBlock = new mazeBlock(mainCanvas.width - SIDEBAR_WIDTH, 0, SIDEBAR_WIDTH, mainCanvas.height);
-		rightBlock.draw(mainCanvas.width - SIDEBAR_WIDTH);
-		edgeBlocks.push(rightBlock);
+MazeBlock.prototype.draw = function() {
+	var context = canvas.getContext("2d");
+	context.fillStyle = 'blue';
+	context.rect(this.x, this.y, this.width, this.height);
+	context.fill();
+}
+
+var maze = {
+	leftBlock: new MazeBlock(0, 0),
+	rightBlock: new MazeBlock(MAIN_WIDTH - BLOCK_WIDTH, 0),
+
+	update: function() {
+		this.leftBlock.update();
+		this.rightBlock.update();
+	},
+
+	draw: function() {
+		this.leftBlock.draw();
+		this.rightBlock.draw();
 	}
 }
 
 var player = {
-	x: null,
-	y: null,
-	canvas: null,
-	update: function() {
-		
-		playerCanvas.width = playerCanvas.width;
+	x: MAIN_WIDTH / 2,
+	y: MAIN_HEIGHT / 2,
+	rad: PLAYER_HEIGHT / 2,
 
+	update: function() {
 		if (keydown.left) {
 			this.x -= 3;
 		}
@@ -82,112 +75,63 @@ var player = {
 			this.y += 3;
 		}
 	},
+
 	draw: function() {
-		// TODO: figure out how to draw relative to mainCanvas
-		var context = playerCanvas.getContext("2d");
-		var rad = PLAYER_HEIGHT / 2;
+		var context = canvas.getContext("2d");
 		context.beginPath();
-		context.arc(this.x, this.y, rad, 0, 2 * Math.PI, false);
+		context.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false);
 		context.fillStyle = 'black';
 		context.fill();
-	},
-
-	explode: function() {
-		this.active = false;
 	}
 }
 
-var mainCanvas;
-var playerCanvas;
-var gameStartTime;
+var timer = {
+	gameStartTime: (new Date).getTime(),
 
-// initialize when the DOM is loaded
-$(document).ready(function() {
-	InitializeCanvas();
-	InitializeGame();
-});
+	draw: function() {
+		var context = canvas.getContext("2d"),
+			timerSeconds = (((new Date).getTime() - this.gameStartTime) / 1000) | 0;
+
+		context.fillStyle = "black";
+		context.font = "32px Veranda";
+		context.fillText(timerSeconds, 120, 60);
+	}
+}
 
 function InitializeCanvas() {
-	// background (main) canvas
-	mainCanvas = $('#mainCanvas')[0];
-	mainCanvas.width = MAIN_WIDTH;
-	mainCanvas.height = MAIN_HEIGHT;
+	canvas = $('#dynamicCanvas')[0];
+	canvas.width = MAIN_WIDTH;
+	canvas.height = MAIN_HEIGHT;
 	
-	var context = mainCanvas.getContext("2d");
-	context.rect(20, 20, mainCanvas.width - 40, mainCanvas.height - 40);
+	// draw static canvas once
+	var staticCanvas = $('#staticCanvas')[0];
+	staticCanvas.width = MAIN_WIDTH;
+	staticCanvas.height = MAIN_HEIGHT;
+	var context = staticCanvas.getContext("2d");
+	context.rect(20, 20, staticCanvas.width - 40, staticCanvas.height - 40);
 	context.fillStyle = 'green';
 	context.fill();
-	
-	// player
-	playerCanvas = $('#playerCanvas')[0];
-	playerCanvas.width = MAIN_WIDTH;
-	playerCanvas.height = MAIN_HEIGHT;
 }
 
 function InitializeGame() {
-	player.x = mainCanvas.width / 2;
-	player.y = mainCanvas.height / 2;
-	player.mainCanvas = mainCanvas;
-	player.canvas = playerCanvas;
-
-
-	Maze.draw();
-
-	gameStartTime = (new Date).getTime();
-
-
 	setInterval(function() {
 		Update();
 		Draw();
 	}, 1000/FPS);
 }
 
-function collides(a, b) {
-	return a.x < b.x + b.width &&
-		a.x + a.width > b.x &&
-		a.y < b.y + b.height &&
-		a.y + a.height > b.y;
-}
-
-function handleCollisions() {
-	mazeBlocks.forEach(function(mazeBlock) {
-		if (collides(mazeBlock, player)) {
-			player.explode();
-		}
-	})
-
-	edgeBlocks.forEach(function(block) {
-		if (collides(block, player)) {
-			player.explode();
-		}
-	})
-}
-
 function Update() {
 	player.update();
-
-	mazeBlocks.forEach(function(mazeBlock) {
-		mazeBlock.update();
-	})
-
-	handleCollisions();
+	maze.update();
 }
 
 function Draw() {
-
-	//var newBlock = new mazeBlock(100, 100, BLOCK_HEIGHT, BLOCK_WIDTH);
-
 	// clear canvas
-	var context = playerCanvas.getContext("2d");
-	context.clearRect(0, 0, playerCanvas.width, playerCanvas.height);
+	var context = canvas.getContext("2d");
+	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	player.draw();
-
-	// draw timer
-	// TODO: put on correct canvas
-	var timerSeconds = (((new Date).getTime() - gameStartTime) / 1000) | 0;
-	context.fillStyle = "black";
-	context.font = "32px Veranda";
-	context.fillText(timerSeconds, 60, 60);
+	maze.draw();
+	timer.draw();
 }
 
