@@ -56,7 +56,7 @@ var maze = {
 		edgeBlocks.push(leftBlock);
 		edgeBlocks.push(rightBlock);
 
-		var middleBlock = new MazeBlock(0, MAIN_WIDTH/2, BLOCK_HEIGHT, BLOCK_WIDTH);
+		var middleBlock = new MazeBlock(MAIN_WIDTH/2, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
 		mazeBlocks.push(middleBlock);
 	},
 
@@ -173,7 +173,7 @@ function HandleCollisions() {
 	mazeBlocks.forEach(function(mazeBlock) {
 		if (Collides(mazeBlock, player)) {
 			player.explode();
-			block.explode();
+			mazeBlock.explode();
 		}
 	})
 
