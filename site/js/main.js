@@ -10,6 +10,7 @@ var BLOCK_WIDTH = 32;
 var BLOCK_HEIGHT = 32;
 
 var GRAVITY = 2;
+var PLAYER_SPEED = 3;
 
 var canvas;
 
@@ -27,7 +28,8 @@ function MazeBlock(x, y, h, w) {
 	this.x = x;
 	this.y = y;
 	this.height = h;
-	this.width = w;	
+	this.width = w;
+	this.active = true;
 }
 
 MazeBlock.prototype = {
@@ -54,15 +56,22 @@ var maze = {
 		edgeBlocks.push(leftBlock);
 		edgeBlocks.push(rightBlock);
 
+		var middleBlock = new MazeBlock(0, MAIN_WIDTH/2, BLOCK_HEIGHT, BLOCK_WIDTH);
+		mazeBlocks.push(middleBlock);
 	},
 
 	update: function() {
 		mazeBlocks.forEach(function(mazeBlock) {
 			mazeBlock.update();
 		})
-		edgeBlocks.forEach(function(edgeBlock) {
-			edgeBlock.draw();
-		})
+
+		mazeBlocks = mazeBlocks.filter(function(block) {
+            return block.active;
+        });
+        
+        edgeBlocks = edgeBlocks.filter(function(block) {
+            return block.active;
+        });
 	},
 
 	draw: function() {
@@ -79,33 +88,37 @@ var player = {
 	x: MAIN_WIDTH / 2,
 	y: MAIN_HEIGHT / 2,
 	rad: PLAYER_HEIGHT / 2,
+	active: true,
 
 	update: function() {
 		if (keydown.left) {
-			this.x -= 3;
+			this.x -= PLAYER_SPEED;
 		}
 
 		if (keydown.right) {
-			this.x += 3;
+			this.x += PLAYER_SPEED;
 		}
 
 		if (keydown.up) {
-			this.y -= 3;
+			this.y -= PLAYER_SPEED;
 		}
 
 		if (keydown.down) {
-			this.y += 3;
+			this.y += PLAYER_SPEED;
 		}
 	},
 
 	draw: function() {
-		var context = canvas.getContext("2d");
-		context.beginPath();
-		context.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false);
-		context.closePath();
+		if (this.active)
+		{
+			var context = canvas.getContext("2d");
+			context.beginPath();
+			context.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false);
+			context.closePath();
 
-		context.fillStyle = 'black';
-		context.fill();
+			context.fillStyle = 'black';
+			context.fill();
+		}
 	},
 
 	explode: function() {
@@ -158,14 +171,16 @@ function Collides(a, b) {
 
 function HandleCollisions() {
 	mazeBlocks.forEach(function(mazeBlock) {
-		if (collides(mazeBlock, player)) {
+		if (Collides(mazeBlock, player)) {
 			player.explode();
+			block.explode();
 		}
 	})
 
 	edgeBlocks.forEach(function(block) {
 		if (Collides(block, player)) {
 			player.explode();
+			block.explode();
 		}
 	})
 }
@@ -174,7 +189,7 @@ function Update() {
 	player.update();
 	maze.update();
 
-	//HandleCollisions();
+	HandleCollisions();
 }
 
 function Draw() {
