@@ -9,32 +9,49 @@ var PLAYER_HEIGHT = 32;
 var BLOCK_WIDTH = 32;
 var BLOCK_HEIGHT = 32;
 
-var GRAVITY = 2;
-var PLAYER_SPEED = 3;
+var GRAVITY = 8;
+var PLAYER_SPEED = 12;
 
 var canvas;
 
 var edgeBlocks = [];
 var mazeBlocks = [];
 
+var gStopGame;
+
+var gHasStarted;
+
 // initialize when the DOM is loaded
 $(document).ready(function() {
-	InitializeCanvas();
-	InitializeGame();
+	gHasStarted = 0;
+	gStopGame = 0;
+	StartEverything();
 });
 
+function StartEverything() {
+	InitializeCanvas();
+	InitializeGame();
+}
 
 function MazeBlock(x, y, h, w) {
 	this.x = x;
 	this.y = y;
-	this.height = h;
-	this.width = w;
+	var randHeight = Math.floor((Math.random() * h/2) + 1);
+	this.height = h + randHeight;
+	var randWidth = Math.floor((Math.random() * w/2) + 1);
+	this.width = w + randWidth;
 	this.active = true;
+	var randWeight = Math.floor((Math.random() * GRAVITY/2) + 1);
+	this.weight = GRAVITY + randWeight;
 }
 
 MazeBlock.prototype = {
 	update: function() {
-		this.y += GRAVITY;
+		this.y += this.weight;
+		if (this.y > MAIN_HEIGHT)
+		{
+			this.active = false;
+		}
 	},
 	draw: function() {
 		var context = canvas.getContext("2d");
@@ -56,7 +73,7 @@ var maze = {
 		edgeBlocks.push(leftBlock);
 		edgeBlocks.push(rightBlock);
 
-		var middleBlock = new MazeBlock(MAIN_WIDTH/2, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
+		var middleBlock = new MazeBlock(0, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
 		mazeBlocks.push(middleBlock);
 	},
 
@@ -72,8 +89,17 @@ var maze = {
         edgeBlocks = edgeBlocks.filter(function(block) {
             return block.active;
         });
-	},
 
+        if (mazeBlocks.length < 5)
+        {
+        	this.addMiddleBlock();
+        }
+	},
+	addMiddleBlock: function() {
+		var rand = Math.floor((Math.random() * MAIN_WIDTH/2) + 1);
+		var newBlock = new MazeBlock(rand, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
+		mazeBlocks.push(newBlock);
+	},
 	draw: function() {
 		mazeBlocks.forEach(function(mazeBlock) {
 			mazeBlock.draw();
@@ -123,22 +149,70 @@ var player = {
 
 	explode: function() {
 		this.active = false;
+	},
+
+	unexplode: function() {
+		this.active = true;
+		this._placeAtStart();
+	},
+
+	_placeAtStart: function() {
+		this.x = MAIN_WIDTH / 2;
+		this.y = MAIN_HEIGHT / 2;
 	}
 }
 
 var timer = {
+	timePassed: 0,
+	active: true,
 	gameStartTime: (new Date).getTime(),
-
 	draw: function() {
 		var context = canvas.getContext("2d"),
 			timerSeconds = (((new Date).getTime() - this.gameStartTime) / 1000) | 0;
-
+		this.timePassed = timerSeconds;
 		context.fillStyle = "black";
 		context.font = "32px Veranda";
-		context.fillText(timerSeconds, 120, 60);
+		if (this.active)
+		{
+			context.fillText(this.timePassed, 120, 60);
+		}	
+		
+	},
+	getSeconds: function() {
+		return this.timePassed;
+	},
+	_initializeTimer: function() {
+		this.gameStartTime = (new Date).getTime();
+	},
+	stop: function() {
+		this.active = false;
+	},
+	restart: function() {
+		this._initializeTimer();
+		this.active = true;
 	}
 }
 
+var EndGame = {
+	hitRestart: function() {
+		timer.stop();
+		gStopGame = 1;
+		this.drawMessage();
+		setTimeout(
+		  function() 
+		  {
+		    RestartGame();
+		  }, 5000);	
+	},
+	drawMessage: function() {
+		var context = canvas.getContext("2d"),
+			timePassed = timer.getSeconds() | 50;
+
+		context.fillStyle = "black";
+		context.font = "32px Veranda";
+		context.fillText("You lasted", 120, 60);
+	}
+}
 function InitializeCanvas() {
 	canvas = $('#dynamicCanvas')[0];
 	canvas.width = MAIN_WIDTH;
@@ -156,12 +230,27 @@ function InitializeCanvas() {
 
 function InitializeGame() {
 	maze.initalize();
-	setInterval(function() {
-		Update();
-		Draw();
-	}, 1000/FPS);
+	if (gHasStarted === 0) 
+	{
+		gHasStarted = 1;
+		setInterval(function() {
+			if (gStopGame === 0)
+			{		
+				Update();
+				Draw();
+			}
+
+		}, 1000/FPS);
+	}
 }
 
+function RestartGame() {
+	ClearCanvas();
+	player.unexplode();
+	timer.restart();
+	StartEverything();
+	gStopGame = 0;
+}
 function Collides(a, b) {
 	return a.x < b.x + b.rad*2 &&
 		a.x + a.width > b.x &&
@@ -170,10 +259,12 @@ function Collides(a, b) {
 }
 
 function HandleCollisions() {
+	hitSomething = 0;
 	mazeBlocks.forEach(function(mazeBlock) {
 		if (Collides(mazeBlock, player)) {
 			player.explode();
 			mazeBlock.explode();
+			hitSomething = 1;
 		}
 	})
 
@@ -181,8 +272,13 @@ function HandleCollisions() {
 		if (Collides(block, player)) {
 			player.explode();
 			block.explode();
+			hitSomething = 1;
 		}
 	})
+
+	if (hitSomething === 1) {
+		EndGame.hitRestart();
+	}
 }
 
 function Update() {
@@ -193,12 +289,15 @@ function Update() {
 }
 
 function Draw() {
-	// clear canvas
-	var context = canvas.getContext("2d");
-	context.clearRect(0, 0, canvas.width, canvas.height);
+	ClearCanvas();
 
 	player.draw();
 	maze.draw();
 	timer.draw();
 }
 
+function ClearCanvas() {
+		// clear canvas
+	var context = canvas.getContext("2d");
+	context.clearRect(0, 0, canvas.width, canvas.height);
+}
