@@ -96,7 +96,7 @@ var maze = {
         }
 	},
 	addMiddleBlock: function() {
-		var rand = Math.floor((Math.random() * MAIN_WIDTH/2) + 1);
+		var rand = Math.floor(Math.random() * MAIN_WIDTH - BLOCK_WIDTH);
 		var newBlock = new MazeBlock(rand, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
 		mazeBlocks.push(newBlock);
 	},
