@@ -1,29 +1,49 @@
 // implements express routing for highscore rest api
 
-//var mongoose = require(__dirname + '/node_modules/mongoose');
-
 function initialize(params) {
-	var app = params.app;
+	var app = params.app,
+		mongoose = require(__dirname + '/node_modules/mongoose');
 
+	// initialize database
+	mongoose.connect('mongodb://localhost/highscoredb');
+
+	var score = new mongoose.Schema({
+			name: { type: String, required: true },
+			score: { type: Number, required: true },
+			date: { type: Date, default: Date.now },
+		}),
+		scoreModel = mongoose.model('Score', score);
+
+	// define routes
 	app.get('/hs', function(req, res) {
 		// get top scores
-		res.send('top scores');
-	});
-
-	app.get('/hs/:name', function(req, res) {
-		// get top score for 'name'
-		var name = req.params.name;
-		// encode param
-		res.send('top score for ' + name);
+		return scoreModel.find(function(err, scores) {
+			if (!err) {
+				res.send('top scores<br/>' + scores);
+			} else {
+				return console.log(err);
+			}
+		});
 	});
 
 	app.get('/hs/:name/:score', function(req, res) {
-		// set new score for 'name'
-		var name = req.params.name,
-			score = req.params.score;
-		// encode params
-		// check that score is a number
-		res.send('set top score to ' + score + ' for ' + name);
+		// new score - compare/add to top scores
+		console.log('GET ' + req.route);
+
+		var score = new scoreModel({
+				name: req.params.name,
+				score: req.params.score,
+			});
+
+		score.save(function(err) {
+			if (!err) {
+				console.log('score created: ' + score);
+				res.send('success');
+			} else {
+				console.log('error saving score: ' + err);
+				res.send('error');
+			}
+		});
 	});
 
 	console.log('highscore service initialized');
