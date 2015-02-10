@@ -12,6 +12,12 @@ var BLOCK_HEIGHT = 32;
 var GRAVITY = 8;
 var PLAYER_SPEED = 12;
 
+var RESTART_HEIGHT = MAIN_HEIGHT - 100;
+var RESTART_HORIZONITAL_OFFSET = 120;
+
+var HIGHSCORE_HEIGHT = MAIN_HEIGHT - 200;
+var HIGHSCORE_HORIZONITAL_OFFSET = 120;
+
 var canvas;
 
 var edgeBlocks = [];
@@ -154,7 +160,7 @@ var player = {
 	}
 }
 
-var timer = {
+var Timer = {
 	timePassed: 0,
 	active: true,
 	gameStartTime: (new Date).getTime(),
@@ -185,6 +191,19 @@ var timer = {
 	}
 }
 
+var Score = {
+	highScore: 0,
+	getCurrent: function() {
+		return Timer.getSeconds();
+	},
+	getHighScore: function() {
+		return this.highScore;
+	},
+	setHighScore: function(newScore) {
+		this.highScore = newScore;
+	}
+}
+
 function InitializeCanvas() {
 	canvas = $('#dynamicCanvas')[0];
 	canvas.width = MAIN_WIDTH;
@@ -203,15 +222,16 @@ function InitializeCanvas() {
 var Game = {
 	hasStarted: 0,
 	shouldStop: 0,
+	intervalId: 0,
 	stopGame: function(){
-		timer.stop();
+		Timer.stop();
 		this.shouldStop = 1;
 	},
 	runLoop: function() {
 		if (this.hasStarted === 0) 
 		{
 			this.hasStarted = 1;
-			setInterval(function() {
+			this.intervalId = setInterval(function() {
 				if (Game.shouldStop === 0)
 				{		
 					Update();
@@ -219,36 +239,81 @@ var Game = {
 				}
 				else
 				{
-					Game.drawEndGameMessage();
+					Game.restart();
 				}
 			}, 1000/FPS);
 		}
 	},
-	hitRestart: function() {
+	updateHighScore: function() {
+		var difference = Score.getCurrent() - Score.getHighScore();
+		if (difference)
+		{
+			Score.setHighScore(Score.getCurrent());
+			this.drawNewHighScore();
+		}
+		else if (difference < 0)
+		{
+			this.drawOldHighScore(difference * -1);
+		}
+		else
+		{
+			this.drawNoChangeInScore();
+		}
+	},
+	drawNewHighScore: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle ="purple";
+		context.font = "32px Veranda";
+		context.fillText("New High Score! " + Score.getHighScore(), HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
+	},
+	drawOldHighScore: function(difference)
+	{
+		var context = canvas.getContext("2d");
+		context.fillStyle ="red";
+		context.font = "32px Veranda";
+		context.fillText("You suck! You did " + difference + " worse than before", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
+	},
+	drawNoChangeInScore: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle ="orange";
+		context.font = "32px Veranda";
+		context.fillText("Meh. The same as your best.", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
+	},
+	gameOver: function() {
 		this.stopGame();
-		setTimeout(
-		  function() 
-		  {
-		    Game.restart();
-		  }, 5000);
+	},
+	showRestartButton: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle ="black";
+		context.font = "32px Veranda";
+		context.fillText("Click to Restart", RESTART_HORIZONITAL_OFFSET, RESTART_HEIGHT);
 	},
 	drawEndGameMessage: function() {
 		var context = canvas.getContext("2d"),
-			timePassed = timer.getSeconds();
+			score = Score.getCurrent();
 		ClearCanvas();
 		context.fillStyle = "black";
 		context.font = "32px Veranda";
-		context.fillText("You lasted " + timePassed + " seconds", 120, 60);
+		context.fillText("You lasted " + score + " seconds", 120, 60);
 		context.fillText("that's what she said", 120, 120);
+		this.updateHighScore();
 	},
 	restart: function() {
-		ClearCanvas();
-		StartEverything();
+		clearInterval(this.intervalId);
+		this.drawEndGameMessage();
+		this.showRestartButton();
+		setTimeout(
+		  function()
+		  {
+		    	ClearCanvas();
+				StartEverything();
+		  }, 5000);
 	},
 	initialize: function() {
 		this.hasStarted = 0;
 		this.shouldStop = 0;
-		timer.restart();
+		clearInterval(Game.intervalId);
+		Timer.restart();
 		InitializeCanvas();
 		maze.initalize();
 		player.initialize();
@@ -282,7 +347,7 @@ function HandleCollisions() {
 	})
 
 	if (hitSomething === 1) {
-		Game.hitRestart();
+		Game.gameOver();
 	}
 }
 
@@ -298,7 +363,7 @@ function Draw() {
 
 	player.draw();
 	maze.draw();
-	timer.draw();
+	Timer.draw();
 }
 
 function ClearCanvas() {
