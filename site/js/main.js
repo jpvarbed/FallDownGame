@@ -17,20 +17,13 @@ var canvas;
 var edgeBlocks = [];
 var mazeBlocks = [];
 
-var gStopGame;
-
-var gHasStarted;
-
 // initialize when the DOM is loaded
 $(document).ready(function() {
-	gHasStarted = 0;
-	gStopGame = 0;
 	StartEverything();
 });
 
 function StartEverything() {
-	InitializeCanvas();
-	InitializeGame();
+	Game.initialize();
 }
 
 function MazeBlock(x, y, h, w) {
@@ -116,6 +109,10 @@ var player = {
 	rad: PLAYER_HEIGHT / 2,
 	active: true,
 
+	initialize: function() {
+		this.active = true;
+		this._placeAtStart();
+	},
 	update: function() {
 		if (keydown.left) {
 			this.x -= PLAYER_SPEED;
@@ -151,11 +148,6 @@ var player = {
 		this.active = false;
 	},
 
-	unexplode: function() {
-		this.active = true;
-		this._placeAtStart();
-	},
-
 	_placeAtStart: function() {
 		this.x = MAIN_WIDTH / 2;
 		this.y = MAIN_HEIGHT / 2;
@@ -182,6 +174,7 @@ var timer = {
 		return this.timePassed;
 	},
 	_initializeTimer: function() {
+		this.active = true;
 		this.gameStartTime = (new Date).getTime();
 	},
 	stop: function() {
@@ -189,27 +182,6 @@ var timer = {
 	},
 	restart: function() {
 		this._initializeTimer();
-		this.active = true;
-	}
-}
-
-var EndGame = {
-	hitRestart: function() {
-		timer.stop();
-		gStopGame = 1;
-		setTimeout(
-		  function() 
-		  {
-		    RestartGame();
-		  }, 5000);	
-	},
-	drawMessage: function() {
-		var context = canvas.getContext("2d"),
-			timePassed = timer.getSeconds();
-		ClearCanvas();
-		context.fillStyle = "black";
-		context.font = "32px Veranda";
-		context.fillText("You lasted " + timePassed, 120, 60);
 	}
 }
 
@@ -228,32 +200,62 @@ function InitializeCanvas() {
 	context.fillRect(20, 20, staticCanvas.width - 40, staticCanvas.height - 40);
 }
 
-function InitializeGame() {
-	maze.initalize();
-	if (gHasStarted === 0) 
-	{
-		gHasStarted = 1;
-		setInterval(function() {
-			if (gStopGame === 0)
-			{		
-				Update();
-				Draw();
-			}
-			else
-			{
-				EndGame.drawMessage();
-			}
-		}, 1000/FPS);
+var Game = {
+	hasStarted: 0,
+	shouldStop: 0,
+	stopGame: function(){
+		timer.stop();
+		this.shouldStop = 1;
+	},
+	runLoop: function() {
+		if (this.hasStarted === 0) 
+		{
+			this.hasStarted = 1;
+			setInterval(function() {
+				if (Game.shouldStop === 0)
+				{		
+					Update();
+					Draw();
+				}
+				else
+				{
+					Game.drawEndGameMessage();
+				}
+			}, 1000/FPS);
+		}
+	},
+	hitRestart: function() {
+		this.stopGame();
+		setTimeout(
+		  function() 
+		  {
+		    Game.restart();
+		  }, 5000);
+	},
+	drawEndGameMessage: function() {
+		var context = canvas.getContext("2d"),
+			timePassed = timer.getSeconds();
+		ClearCanvas();
+		context.fillStyle = "black";
+		context.font = "32px Veranda";
+		context.fillText("You lasted " + timePassed + " seconds", 120, 60);
+		context.fillText("that's what she said", 120, 120);
+	},
+	restart: function() {
+		ClearCanvas();
+		StartEverything();
+	},
+	initialize: function() {
+		this.hasStarted = 0;
+		this.shouldStop = 0;
+		timer.restart();
+		InitializeCanvas();
+		maze.initalize();
+		player.initialize();
+		this.runLoop();
 	}
 }
 
-function RestartGame() {
-	ClearCanvas();
-	player.unexplode();
-	timer.restart();
-	StartEverything();
-	gStopGame = 0;
-}
 function Collides(a, b) {
 	return a.x < b.x + b.rad*2 &&
 		a.x + a.width > b.x &&
@@ -280,7 +282,7 @@ function HandleCollisions() {
 	})
 
 	if (hitSomething === 1) {
-		EndGame.hitRestart();
+		Game.hitRestart();
 	}
 }
 
