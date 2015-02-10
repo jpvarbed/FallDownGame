@@ -206,7 +206,7 @@ var EndGame = {
 	drawMessage: function() {
 		var context = canvas.getContext("2d"),
 			timePassed = timer.getSeconds();
-
+		ClearCanvas();
 		context.fillStyle = "black";
 		context.font = "32px Veranda";
 		context.fillText("You lasted " + timePassed, 120, 60);
