@@ -197,7 +197,6 @@ var EndGame = {
 	hitRestart: function() {
 		timer.stop();
 		gStopGame = 1;
-		this.drawMessage();
 		setTimeout(
 		  function() 
 		  {
@@ -206,13 +205,14 @@ var EndGame = {
 	},
 	drawMessage: function() {
 		var context = canvas.getContext("2d"),
-			timePassed = timer.getSeconds() | 50;
+			timePassed = timer.getSeconds();
 
 		context.fillStyle = "black";
 		context.font = "32px Veranda";
-		context.fillText("You lasted", 120, 60);
+		context.fillText("You lasted " + timePassed, 120, 60);
 	}
 }
+
 function InitializeCanvas() {
 	canvas = $('#dynamicCanvas')[0];
 	canvas.width = MAIN_WIDTH;
@@ -239,7 +239,10 @@ function InitializeGame() {
 				Update();
 				Draw();
 			}
-
+			else
+			{
+				EndGame.drawMessage();
+			}
 		}, 1000/FPS);
 	}
 }
