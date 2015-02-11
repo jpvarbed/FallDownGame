@@ -4,7 +4,7 @@ function Player(startX, startY, width, height, moveSpeed) {
 	this._startX = startX;
 	this._startY = startY;
 	this._moveSpeed = moveSpeed;
-	this._mouseMoveSpeed = this._moveSpeed;
+	this._mouseMoveSpeed = this._moveSpeed * 5;
 	this.rad = width / 2;
 	this.active = true;
 }
@@ -34,19 +34,19 @@ Player.prototype = {
 	moveFromDragValues: function()
 	{
 		if (mouseMoveValues["left"]) {
-			this.x += this._mouseMoveSpeed;
+			this.x += mouseMoveValues["horizonital"];
 		}	
 
 		if (mouseMoveValues["right"]) {
-			this.x -= this._mouseMoveSpeed;
+			this.x -= mouseMoveValues["horizonital"];
 		}
 
 		if (mouseMoveValues["up"]) {
-			this.y += this._mouseMoveSpeed;
+			this.y += mouseMoveValues["vertical"];
 		}
 
 		if (mouseMoveValues["down"]) {
-			this.y -= this._mouseMoveSpeed;
+			this.y -= mouseMoveValues["vertical"]
 		}
 	},
 	updateWithMouseDrag: function(didMouseMove) {
@@ -79,7 +79,10 @@ Player.prototype = {
 	},
 
 	explode: function() {
-		this.active = false;
+		if (gDebug === 0)
+		{
+			this.active = false;
+		}
 	},
 
 	_placeAtStart: function() {

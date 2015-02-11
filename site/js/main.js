@@ -20,6 +20,8 @@ var HIGHSCORE_HORIZONITAL_OFFSET = 120;
 var canvas;
 var player;
 
+var gDebug = 0;
+
 var MAZE_BLOCK = 5;
 var PRIZE_BLOCK = 6;
 var edgeBlocks = [];
@@ -272,7 +274,10 @@ var Game = {
 		this.mouseHasMoved = true;
 	},
 	gameOver: function(reason) {
-		this.stopGame();
+		if (gDebug === 0)
+		{
+			this.stopGame();
+		}
 	},
 	showRestart: function() {
 		clearInterval(this.intervalId);
