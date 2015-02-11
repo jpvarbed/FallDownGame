@@ -11,7 +11,7 @@ var BLOCK_HEIGHT = 32;
 var GRAVITY = 8;
 var PLAYER_SPEED = 12;
 
-var RESTART_HEIGHT = MAIN_HEIGHT - 100;
+var RESTART_HEIGHT = MAIN_HEIGHT;
 var RESTART_HORIZONITAL_OFFSET = 120;
 
 var HIGHSCORE_HEIGHT = MAIN_HEIGHT - 200;
@@ -245,6 +245,7 @@ var Game = {
 	shouldStop: 0,
 	intervalId: 0,
 	restartTimerId: 0,
+	mouseHasMoved: false,
 	stopGame: function(){
 		Timer.stop();
 		this.shouldStop = 1;
@@ -256,8 +257,9 @@ var Game = {
 			this.intervalId = setInterval(function() {
 				if (Game.shouldStop === 0)
 				{		
-					Update();
-					Draw();
+					Update(Game.mouseHasMoved);
+					Draw(Game.mouseHasMoved);
+					Game.mouseHasMoved = false;
 				}
 				else
 				{
@@ -265,6 +267,9 @@ var Game = {
 				}
 			}, 1000/FPS);
 		}
+	},
+	mouseMoved: function() {
+		this.mouseHasMoved = true;
 	},
 	gameOver: function(reason) {
 		this.stopGame();
@@ -343,18 +348,18 @@ function HandleCollisions() {
 	}
 }
 
-function Update() {
+function Update(didMouseMove) {
 	Timer.update();
-	player.update();
+	player.update(didMouseMove);
 	maze.update();
 
 	HandleCollisions();
 }
 
-function Draw() {
+function Draw(didMouseMove) {
 	ClearCanvas();
 
-	player.draw(canvas);
+	player.draw(canvas, didMouseMove);
 	maze.draw();
 	Score.draw();
 }

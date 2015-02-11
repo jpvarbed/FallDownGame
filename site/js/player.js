@@ -4,6 +4,7 @@ function Player(startX, startY, width, height, moveSpeed) {
 	this._startX = startX;
 	this._startY = startY;
 	this._moveSpeed = moveSpeed;
+	this._mouseMoveSpeed = this._moveSpeed;
 	this.rad = width / 2;
 	this.active = true;
 }
@@ -13,8 +14,7 @@ Player.prototype = {
 		this.active = true;
 		this._placeAtStart();
 	},
-
-	update: function() {
+	updateWithKeys: function() {
 		if (keydown.left) {
 			this.x -= this._moveSpeed;
 		}	
@@ -30,6 +30,34 @@ Player.prototype = {
 		if (keydown.down) {
 			this.y += this._moveSpeed;
 		}
+	},
+	moveFromDragValues: function()
+	{
+		if (mouseMoveValues["left"]) {
+			this.x += this._mouseMoveSpeed;
+		}	
+
+		if (mouseMoveValues["right"]) {
+			this.x -= this._mouseMoveSpeed;
+		}
+
+		if (mouseMoveValues["up"]) {
+			this.y += this._mouseMoveSpeed;
+		}
+
+		if (mouseMoveValues["down"]) {
+			this.y -= this._mouseMoveSpeed;
+		}
+	},
+	updateWithMouseDrag: function(didMouseMove) {
+		if (didMouseMove)
+		{
+			this.moveFromDragValues();
+		}
+	},
+	update: function(didMouseMove) {
+		this.updateWithKeys();
+		this.updateWithMouseDrag(didMouseMove);
 
 		if (this.y > MAIN_HEIGHT || this.x > MAIN_WIDTH)
 		{
@@ -37,8 +65,7 @@ Player.prototype = {
 			Game.gameOver();
 		}
 	},
-
-	draw: function(canvas) {
+	draw: function(canvas, didMouseMove) {
 		if (this.active)
 		{
 			var context = canvas.getContext("2d");
