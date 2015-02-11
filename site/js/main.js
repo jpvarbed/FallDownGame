@@ -36,8 +36,19 @@ function StartEverything() {
 }
 
 var maze = {
+	clearBlocks: function()
+	{
+		//fastest way to clear
+		while(mazeBlocks.length > 0) {
+		    mazeBlocks.pop();
+		}
+		while(prizeBlocks.length > 0) {
+		    prizeBlocks.pop();
+		}
+	},
 	initalize: function()
 	{
+		this.clearBlocks();
 		var leftBlock = new MazeBlock(0, 0, MAIN_HEIGHT, BLOCK_WIDTH);
 		var rightBlock = new MazeBlock(MAIN_WIDTH - BLOCK_WIDTH, 0, MAIN_HEIGHT, MAIN_WIDTH);
 		edgeBlocks.push(leftBlock);
@@ -224,7 +235,7 @@ var EndGameMessage = {
 		context.fillStyle = "black";
 		context.font = "32px Veranda";
 		context.fillText("You lasted " + score + " seconds", 120, 60);
-		context.fillText("that's what she said", 120, 120);
+		EndGameJoke(score, context);
 		Score.updateHighScore();
 	}
 }
