@@ -266,7 +266,7 @@ var Game = {
 			}, 1000/FPS);
 		}
 	},
-	gameOver: function() {
+	gameOver: function(reason) {
 		this.stopGame();
 	},
 	showRestart: function() {

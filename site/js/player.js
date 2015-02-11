@@ -30,6 +30,12 @@ Player.prototype = {
 		if (keydown.down) {
 			this.y += this._moveSpeed;
 		}
+
+		if (this.y > MAIN_HEIGHT || this.x > MAIN_WIDTH)
+		{
+			this.active = false;
+			Game.gameOver();
+		}
 	},
 
 	draw: function(canvas) {
