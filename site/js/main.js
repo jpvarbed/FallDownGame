@@ -18,10 +18,10 @@ var RESTART_HORIZONITAL_OFFSET = 120;
 var HIGHSCORE_HEIGHT = MAIN_HEIGHT - 200;
 var HIGHSCORE_HORIZONITAL_OFFSET = 120;
 
-var canvas;
-
 var edgeBlocks = [];
 var mazeBlocks = [];
+
+var canvas;
 
 // initialize when the DOM is loaded
 $(document).ready(function() {
@@ -64,7 +64,6 @@ MazeBlock.prototype.explode = function() {
 }
 
 var maze = {
-
 	initalize: function()
 	{
 		var leftBlock = new MazeBlock(0, 0, MAIN_HEIGHT, BLOCK_WIDTH);
@@ -201,7 +200,42 @@ var Score = {
 	},
 	setHighScore: function(newScore) {
 		this.highScore = newScore;
-	}
+	},
+	updateHighScore: function() {
+		var difference = this.getCurrent() - this.getHighScore();
+		if (difference)
+		{
+			this.setHighScore(Score.getCurrent());
+			this.drawNewHighScore();
+		}
+		else if (difference < 0)
+		{
+			this.drawOldHighScore(difference * -1);
+		}
+		else
+		{
+			this.drawNoChangeInScore();
+		}
+	},
+	drawNoChangeInScore: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle ="orange";
+		context.font = "32px Veranda";
+		context.fillText("Meh. The same as your best.", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
+	},
+	drawNewHighScore: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle ="purple";
+		context.font = "32px Veranda";
+		context.fillText("New High Score! " + Score.getHighScore(), HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
+	},
+	drawOldHighScore: function(difference)
+	{
+		var context = canvas.getContext("2d");
+		context.fillStyle ="red";
+		context.font = "32px Veranda";
+		context.fillText("You suck! You did " + difference + " worse than before", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
+	},
 }
 
 function InitializeCanvas() {
@@ -219,10 +253,36 @@ function InitializeCanvas() {
 	context.fillRect(20, 20, staticCanvas.width - 40, staticCanvas.height - 40);
 }
 
+var restartButton = {
+	show: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle ="black";
+		context.font = "32px Veranda";
+		context.fillText("Click to Restart", RESTART_HORIZONITAL_OFFSET, RESTART_HEIGHT);
+	},
+	restartHit: function() {
+		Game.restart();
+	}
+}
+
+var EndGameMessage = {
+	show: function() {
+		var context = canvas.getContext("2d"),
+			score = Score.getCurrent();
+		ClearCanvas();
+		context.fillStyle = "black";
+		context.font = "32px Veranda";
+		context.fillText("You lasted " + score + " seconds", 120, 60);
+		context.fillText("that's what she said", 120, 120);
+		Score.updateHighScore();
+	}
+}
+
 var Game = {
 	hasStarted: 0,
 	shouldStop: 0,
 	intervalId: 0,
+	restartTimerId: 0,
 	stopGame: function(){
 		Timer.stop();
 		this.shouldStop = 1;
@@ -239,75 +299,31 @@ var Game = {
 				}
 				else
 				{
-					Game.restart();
+					Game.showRestart();
 				}
 			}, 1000/FPS);
 		}
 	},
-	updateHighScore: function() {
-		var difference = Score.getCurrent() - Score.getHighScore();
-		if (difference)
-		{
-			Score.setHighScore(Score.getCurrent());
-			this.drawNewHighScore();
-		}
-		else if (difference < 0)
-		{
-			this.drawOldHighScore(difference * -1);
-		}
-		else
-		{
-			this.drawNoChangeInScore();
-		}
-	},
-	drawNewHighScore: function() {
-		var context = canvas.getContext("2d");
-		context.fillStyle ="purple";
-		context.font = "32px Veranda";
-		context.fillText("New High Score! " + Score.getHighScore(), HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
-	},
-	drawOldHighScore: function(difference)
-	{
-		var context = canvas.getContext("2d");
-		context.fillStyle ="red";
-		context.font = "32px Veranda";
-		context.fillText("You suck! You did " + difference + " worse than before", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
-	},
-	drawNoChangeInScore: function() {
-		var context = canvas.getContext("2d");
-		context.fillStyle ="orange";
-		context.font = "32px Veranda";
-		context.fillText("Meh. The same as your best.", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
-	},
 	gameOver: function() {
 		this.stopGame();
 	},
-	showRestartButton: function() {
-		var context = canvas.getContext("2d");
-		context.fillStyle ="black";
-		context.font = "32px Veranda";
-		context.fillText("Click to Restart", RESTART_HORIZONITAL_OFFSET, RESTART_HEIGHT);
-	},
-	drawEndGameMessage: function() {
-		var context = canvas.getContext("2d"),
-			score = Score.getCurrent();
-		ClearCanvas();
-		context.fillStyle = "black";
-		context.font = "32px Veranda";
-		context.fillText("You lasted " + score + " seconds", 120, 60);
-		context.fillText("that's what she said", 120, 120);
-		this.updateHighScore();
-	},
-	restart: function() {
+	showRestart: function() {
 		clearInterval(this.intervalId);
-		this.drawEndGameMessage();
-		this.showRestartButton();
-		setTimeout(
+		EndGameMessage.show();
+		restartButton.show();
+		Game.restartTimerId = setTimeout(
 		  function()
 		  {
-		    	ClearCanvas();
-				StartEverything();
+		  	Game.restart();
 		  }, 5000);
+	},
+	restart: function() {
+		if (Game.shouldStop === 1)
+		{
+			clearTimeout(Game.restartTimerId);
+			ClearCanvas();
+			StartEverything();
+		}
 	},
 	initialize: function() {
 		this.hasStarted = 0;
