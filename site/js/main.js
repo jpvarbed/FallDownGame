@@ -1,4 +1,3 @@
-
 var FPS = 30;
 var MAIN_WIDTH = 640;
 var MAIN_HEIGHT = 480;
@@ -19,6 +18,7 @@ var HIGHSCORE_HEIGHT = MAIN_HEIGHT - 200;
 var HIGHSCORE_HORIZONITAL_OFFSET = 120;
 
 var canvas;
+var player;
 
 var edgeBlocks = [];
 var mazeBlocks = [];
@@ -106,57 +106,6 @@ var maze = {
 		edgeBlocks.forEach(function(edgeBlock) {
 			edgeBlock.draw();
 		})
-	}
-}
-
-var player = {
-	x: MAIN_WIDTH / 2,
-	y: MAIN_HEIGHT / 2,
-	rad: PLAYER_HEIGHT / 2,
-	active: true,
-
-	initialize: function() {
-		this.active = true;
-		this._placeAtStart();
-	},
-	update: function() {
-		if (keydown.left) {
-			this.x -= PLAYER_SPEED;
-		}
-
-		if (keydown.right) {
-			this.x += PLAYER_SPEED;
-		}
-
-		if (keydown.up) {
-			this.y -= PLAYER_SPEED;
-		}
-
-		if (keydown.down) {
-			this.y += PLAYER_SPEED;
-		}
-	},
-
-	draw: function() {
-		if (this.active)
-		{
-			var context = canvas.getContext("2d");
-			context.beginPath();
-			context.arc(this.x, this.y, this.rad, 0, 2 * Math.PI, false);
-			context.closePath();
-
-			context.fillStyle = 'black';
-			context.fill();
-		}
-	},
-
-	explode: function() {
-		this.active = false;
-	},
-
-	_placeAtStart: function() {
-		this.x = MAIN_WIDTH / 2;
-		this.y = MAIN_HEIGHT / 2;
 	}
 }
 
@@ -316,6 +265,12 @@ var Game = {
 		Timer.restart();
 		InitializeCanvas();
 		maze.initalize();
+		player = new Player(
+			MAIN_WIDTH / 2,
+			MAIN_HEIGHT / 2,
+			PLAYER_WIDTH,
+			PLAYER_HEIGHT,
+			PLAYER_SPEED);
 		player.initialize();
 		this.runLoop();
 	}
@@ -361,13 +316,12 @@ function Update() {
 function Draw() {
 	ClearCanvas();
 
-	player.draw();
+	player.draw(canvas);
 	maze.draw();
 	Timer.draw();
 }
 
 function ClearCanvas() {
-		// clear canvas
 	var context = canvas.getContext("2d");
 	context.clearRect(0, 0, canvas.width, canvas.height);
 }
