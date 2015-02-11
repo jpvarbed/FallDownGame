@@ -1,0 +1,2 @@
+Make messages cheekier.
+Random end game message.

@@ -1,6 +1,20 @@
-function MazeBlock(x, y, h, w) {
+function MazeBlock(x, y, blockType) {
 	this.x = x;
 	this.y = y;
+	var h = 0;
+	var w = 0;
+	this.color = 'blue';
+	if (blockType === MAZE_BLOCK)
+	{
+		h = BLOCK_HEIGHT;
+		w = BLOCK_WIDTH;
+	}
+	else if (blockType === PRIZE_BLOCK)
+	{
+		h = BLOCK_HEIGHT;
+		w = BLOCK_WIDTH;
+		this.color = 'red';
+	}
 	var randHeight = Math.floor((Math.random() * h/2) + 1);
 	this.height = h + randHeight;
 	var randWidth = Math.floor((Math.random() * w/2) + 1);
@@ -21,11 +35,14 @@ MazeBlock.prototype = {
 
 	draw: function() {
 		var context = canvas.getContext("2d");
-		context.fillStyle = 'blue';
+		context.fillStyle = this.color;
 		context.fillRect(this.x, this.y, this.width, this.height);
 	},
 	
 	explode: function() {
 		this.active = false;
+	},
+	filter: function() {
+		return this.active;
 	}
 }

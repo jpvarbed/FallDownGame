@@ -20,8 +20,11 @@ var HIGHSCORE_HORIZONITAL_OFFSET = 120;
 var canvas;
 var player;
 
+var MAZE_BLOCK = 5;
+var PRIZE_BLOCK = 6;
 var edgeBlocks = [];
 var mazeBlocks = [];
+var prizeBlocks = [];
 
 // initialize when the DOM is loaded
 $(document).ready(function() {
@@ -43,29 +46,50 @@ var maze = {
 		var middleBlock = new MazeBlock(0, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
 		mazeBlocks.push(middleBlock);
 	},
-
-	update: function() {
-		mazeBlocks.forEach(function(mazeBlock) {
-			mazeBlock.update();
+	updateBlockSet: function(blockSet) {
+		blockSet.forEach(function(block) {
+			block.update();
 		})
-
-		mazeBlocks = mazeBlocks.filter(function(block) {
+	},
+	filterBlockSet: function(blockSet) {
+		blockSet = blockSet.filter(function(block) {
             return block.active;
         });
-        
-        edgeBlocks = edgeBlocks.filter(function(block) {
-            return block.active;
-        });
+	},
+	update: function() {
+		this.updateBlockSet(mazeBlocks);
+		this.updateBlockSet(prizeBlocks);
+		// TODO figure out how to pass by reference to filterblockset
+		mazeBlocks = mazeBlocks.filter(function(block){
+			return block.filter();
+		});
+		prizeBlocks = prizeBlocks.filter(function(block){
+			return block.filter();
+		});		
+		edgeBlocks = edgeBlocks.filter(function(block){
+			return block.filter();
+		});
 
         if (mazeBlocks.length < 5)
         {
         	this.addMiddleBlock();
         }
+
+        if (prizeBlocks.length < 1)
+        {
+        	this.addPrizeBlock();
+        }
+	},
+	makeStandardBlock: function(blockType) {
+		var rand = Math.floor(Math.random() * (MAIN_WIDTH - BLOCK_WIDTH));
+		var newBlock = new MazeBlock(rand, 0, blockType);
+		return newBlock;
 	},
 	addMiddleBlock: function() {
-		var rand = Math.floor(Math.random() * MAIN_WIDTH - BLOCK_WIDTH);
-		var newBlock = new MazeBlock(rand, 0, BLOCK_HEIGHT, BLOCK_WIDTH);
-		mazeBlocks.push(newBlock);
+		mazeBlocks.push(this.makeStandardBlock(MAZE_BLOCK));
+	},
+	addPrizeBlock: function() {
+		prizeBlocks.push(this.makeStandardBlock(PRIZE_BLOCK));
 	},
 	draw: function() {
 		mazeBlocks.forEach(function(mazeBlock) {
@@ -74,6 +98,9 @@ var maze = {
 		edgeBlocks.forEach(function(edgeBlock) {
 			edgeBlock.draw();
 		})
+		prizeBlocks.forEach(function(prizeBlock) {
+			prizeBlock.draw();
+		})
 	}
 }
 
@@ -81,18 +108,6 @@ var Timer = {
 	timePassed: 0,
 	active: true,
 	gameStartTime: (new Date).getTime(),
-	draw: function() {
-		var context = canvas.getContext("2d"),
-			timerSeconds = (((new Date).getTime() - this.gameStartTime) / 1000) | 0;
-		this.timePassed = timerSeconds;
-		context.fillStyle = "black";
-		context.font = "32px Veranda";
-		if (this.active)
-		{
-			context.fillText(this.timePassed, 120, 60);
-		}	
-		
-	},
 	getSeconds: function() {
 		return this.timePassed;
 	},
@@ -105,13 +120,27 @@ var Timer = {
 	},
 	restart: function() {
 		this._initializeTimer();
+	},
+	update: function() {
+		this.timePassed =  (((new Date).getTime() - this.gameStartTime) / 1000) | 0;
 	}
 }
 
 var Score = {
 	highScore: 0,
+	prizeScore: 0,
+	initialize: function() {
+		this.prizeScore = 0;
+	},
+	draw: function() {
+		var context = canvas.getContext("2d");
+		context.fillStyle = "black";
+		context.font = "32px Veranda";
+		context.fillText("Current score:" + Score.getCurrent(), 50, 60);
+		context.fillText("High score:" + Score.getHighScore(), MAIN_WIDTH - 200, 60);
+	},
 	getCurrent: function() {
-		return Timer.getSeconds();
+		return Timer.getSeconds() + this.prizeScore;
 	},
 	getHighScore: function() {
 		return this.highScore;
@@ -121,7 +150,7 @@ var Score = {
 	},
 	updateHighScore: function() {
 		var difference = this.getCurrent() - this.getHighScore();
-		if (difference)
+		if (difference > 0)
 		{
 			this.setHighScore(Score.getCurrent());
 			this.drawNewHighScore();
@@ -154,6 +183,10 @@ var Score = {
 		context.font = "32px Veranda";
 		context.fillText("You suck! You did " + difference + " worse than before", HIGHSCORE_HORIZONITAL_OFFSET, HIGHSCORE_HEIGHT);
 	},
+	blockHit: function(block)
+	{
+		this.prizeScore += 10;
+	}
 }
 
 function InitializeCanvas() {
@@ -247,6 +280,7 @@ var Game = {
 		this.hasStarted = 0;
 		this.shouldStop = 0;
 		clearInterval(Game.intervalId);
+		Score.initialize();
 		Timer.restart();
 		InitializeCanvas();
 		maze.initalize();
@@ -286,12 +320,20 @@ function HandleCollisions() {
 		}
 	})
 
+	prizeBlocks.forEach(function(block) {
+		if (Collides(block, player)) {
+			block.explode();
+			Score.blockHit(block);
+		}
+	})
+
 	if (hitSomething === 1) {
 		Game.gameOver();
 	}
 }
 
 function Update() {
+	Timer.update();
 	player.update();
 	maze.update();
 
@@ -303,7 +345,7 @@ function Draw() {
 
 	player.draw(canvas);
 	maze.draw();
-	Timer.draw();
+	Score.draw();
 }
 
 function ClearCanvas() {
