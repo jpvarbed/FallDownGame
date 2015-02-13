@@ -1,6 +1,7 @@
 var FPS = 30;
-var MAIN_WIDTH = 640;
-var MAIN_HEIGHT = 480;
+
+var GAME_WIDTH = 640;
+var GAME_HEIGHT = 480;
 
 var PLAYER_WIDTH = 32;
 var PLAYER_HEIGHT = 32;
@@ -11,10 +12,10 @@ var BLOCK_HEIGHT = 32;
 var GRAVITY = 8;
 var PLAYER_SPEED = 12;
 
-var RESTART_HEIGHT = MAIN_HEIGHT;
+var RESTART_HEIGHT = GAME_HEIGHT;
 var RESTART_HORIZONITAL_OFFSET = 120;
 
-var HIGHSCORE_HEIGHT = MAIN_HEIGHT - 200;
+var HIGHSCORE_HEIGHT = GAME_HEIGHT - 200;
 var HIGHSCORE_HORIZONITAL_OFFSET = 120;
 
 var canvas;
@@ -51,8 +52,8 @@ var maze = {
 	initalize: function()
 	{
 		this.clearBlocks();
-		var leftBlock = new MazeBlock(0, 0, MAIN_HEIGHT, BLOCK_WIDTH);
-		var rightBlock = new MazeBlock(MAIN_WIDTH - BLOCK_WIDTH, 0, MAIN_HEIGHT, MAIN_WIDTH);
+		var leftBlock = new MazeBlock(0, 0, GAME_HEIGHT, BLOCK_WIDTH);
+		var rightBlock = new MazeBlock(GAME_WIDTH - BLOCK_WIDTH, 0, GAME_HEIGHT, GAME_WIDTH);
 		edgeBlocks.push(leftBlock);
 		edgeBlocks.push(rightBlock);
 
@@ -94,7 +95,7 @@ var maze = {
         }
 	},
 	makeStandardBlock: function(blockType) {
-		var rand = Math.floor(Math.random() * (MAIN_WIDTH - BLOCK_WIDTH));
+		var rand = Math.floor(Math.random() * (GAME_WIDTH - BLOCK_WIDTH));
 		var newBlock = new MazeBlock(rand, 0, blockType);
 		return newBlock;
 	},
@@ -150,7 +151,7 @@ var Score = {
 		context.fillStyle = "black";
 		context.font = "32px Veranda";
 		context.fillText("Current score:" + Score.getCurrent(), 50, 60);
-		context.fillText("High score:" + Score.getHighScore(), MAIN_WIDTH - 200, 60);
+		context.fillText("High score:" + Score.getHighScore(), GAME_WIDTH - 200, 60);
 	},
 	getCurrent: function() {
 		return Timer.getSeconds() + this.prizeScore;
@@ -204,13 +205,13 @@ var Score = {
 
 function InitializeCanvas() {
 	canvas = $('#dynamicCanvas')[0];
-	canvas.width = MAIN_WIDTH;
-	canvas.height = MAIN_HEIGHT;
+	canvas.width = GAME_WIDTH;
+	canvas.height = GAME_HEIGHT;
 	
 	// draw static canvas once
 	var staticCanvas = $('#staticCanvas')[0];
-	staticCanvas.width = MAIN_WIDTH;
-	staticCanvas.height = MAIN_HEIGHT;
+	staticCanvas.width = GAME_WIDTH;
+	staticCanvas.height = GAME_HEIGHT;
 
 	var context = staticCanvas.getContext("2d");
 	context.fillStyle = 'green';
@@ -239,80 +240,6 @@ var EndGameMessage = {
 		context.fillText("You lasted " + score + " seconds", 120, 60);
 		EndGameJoke(score, context);
 		Score.updateHighScore();
-	}
-}
-
-var Game = {
-	hasStarted: 0,
-	shouldStop: 0,
-	intervalId: 0,
-	restartTimerId: 0,
-	mouseHasMoved: false,
-	stopGame: function(){
-		Timer.stop();
-		this.shouldStop = 1;
-	},
-	runLoop: function() {
-		if (this.hasStarted === 0) 
-		{
-			this.hasStarted = 1;
-			this.intervalId = setInterval(function() {
-				if (Game.shouldStop === 0)
-				{		
-					Update(Game.mouseHasMoved);
-					Draw(Game.mouseHasMoved);
-					Game.mouseHasMoved = false;
-				}
-				else
-				{
-					Game.showRestart();
-				}
-			}, 1000/FPS);
-		}
-	},
-	mouseMoved: function() {
-		this.mouseHasMoved = true;
-	},
-	gameOver: function(reason) {
-		if (gDebug === 0)
-		{
-			this.stopGame();
-		}
-	},
-	showRestart: function() {
-		clearInterval(this.intervalId);
-		EndGameMessage.show();
-		restartButton.show();
-		Game.restartTimerId = setTimeout(
-		  function()
-		  {
-		  	Game.restart();
-		  }, 5000);
-	},
-	restart: function() {
-		if (Game.shouldStop === 1)
-		{
-			clearTimeout(Game.restartTimerId);
-			ClearCanvas();
-			StartEverything();
-		}
-	},
-	initialize: function() {
-		this.hasStarted = 0;
-		this.shouldStop = 0;
-		clearInterval(Game.intervalId);
-		Score.initialize();
-		Timer.restart();
-		InitializeCanvas();
-		maze.initalize();
-		player = new Player(
-			MAIN_WIDTH / 2,
-			MAIN_HEIGHT / 2,
-			PLAYER_WIDTH,
-			PLAYER_HEIGHT,
-			PLAYER_SPEED);
-		player.initialize();
-		this.runLoop();
 	}
 }
 
