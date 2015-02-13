@@ -27,10 +27,7 @@ function MazeBlock(x, y, blockType) {
 MazeBlock.prototype = {
 	update: function() {
 		this.y += this.weight;
-		if (this.y > MAIN_HEIGHT)
-		{
-			this.active = false;
-		}
+		Game.checkIfValid(this);
 	},
 
 	draw: function() {

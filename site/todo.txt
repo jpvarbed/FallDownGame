@@ -1,2 +1,4 @@
 Make messages cheekier.
 Random end game message.
+On mouse down set mouse down to true.
+On update check if true and move player towards present mousemove state.

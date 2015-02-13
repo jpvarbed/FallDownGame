@@ -1,3 +1,5 @@
+var xTolerance = 20;
+var yTolerance = xTolerance;
 function Player(startX, startY, width, height, moveSpeed) {
 	this.x = startX;
 	this.y = startY;
@@ -13,6 +15,12 @@ Player.prototype = {
 	initialize: function () {
 		this.active = true;
 		this._placeAtStart();
+	},
+	update: function(isMouseDown) {
+		this.updateWithKeys();
+		this.updateWithMouseDrag(isMouseDown);
+
+		Game.checkIfValid(this);
 	},
 	updateWithKeys: function() {
 		if (keydown.left) {
@@ -31,41 +39,58 @@ Player.prototype = {
 			this.y += this._moveSpeed;
 		}
 	},
-	moveFromDragValues: function()
+	updateWithMouseDrag: function(isMouseDown) {
+		if (isMouseDown)
+		{
+			this.moveFromDragValues(mouseClick[mouseX], mouseClick[mouseY]);
+		}
+	},
+	moveFromDragValues: function(x, y)
 	{
-		if (mouseMoveValues["left"]) {
-			this.x += mouseMoveValues["horizonital"];
-		}	
-
-		if (mouseMoveValues["right"]) {
-			this.x -= mouseMoveValues["horizonital"];
-		}
-
-		if (mouseMoveValues["up"]) {
-			this.y += mouseMoveValues["vertical"];
-		}
-
-		if (mouseMoveValues["down"]) {
-			this.y -= mouseMoveValues["vertical"]
-		}
+		this.moveHorizonital(x);
+		this.moveVertical(y);
 	},
-	updateWithMouseDrag: function(didMouseMove) {
-		if (didMouseMove)
+	moveHorizonital: function(x)
+	{
+		if (!this.isXChangeWithTolerance(x))
 		{
-			this.moveFromDragValues();
+			return;
 		}
-	},
-	update: function(didMouseMove) {
-		this.updateWithKeys();
-		this.updateWithMouseDrag(didMouseMove);
-
-		if (this.y > MAIN_HEIGHT || this.x > MAIN_WIDTH)
+		if (x > this.x)
 		{
-			this.active = false;
-			Game.gameOver();
+			this.x += this._moveSpeed;
+		}
+		else if (x < this.x)
+		{
+			this.x -= this._moveSpeed;
 		}
 	},
-	draw: function(canvas, didMouseMove) {
+	isXChangeWithTolerance: function(x)
+	{
+		var dist = Math.abs(this.x - x);
+		return dist > xTolerance;
+	},
+	moveVertical: function(y)
+	{
+		if (!this.isYChangeWithTolerance(y))
+		{
+			return;
+		}
+		if (y > this.y)
+		{
+			this.y += this._moveSpeed;
+		}
+		else if (y < this.y)
+		{
+			this.y -= this._moveSpeed;
+		}
+	},
+	isYChangeWithTolerance: function(y)
+	{
+		var dist = Math.abs(this.y - y);
+		return dist > yTolerance;
+	},
+	draw: function(canvas, isMouseDown) {
 		if (this.active)
 		{
 			var context = canvas.getContext("2d");
@@ -82,6 +107,7 @@ Player.prototype = {
 		if (gDebug === 0)
 		{
 			this.active = false;
+			Game.gameOver();
 		}
 	},
 
